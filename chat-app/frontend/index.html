@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ChatFlow - Real-time Messaging</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .container {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      max-width: 1200px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .header {
+      padding: 20px 30px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header h1 {
+      color: white;
+      font-size: 1.8rem;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: white;
+      font-size: 0.9rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      animation: pulse 2s infinite;
+    }
+
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .chat-container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .chat-container::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+
+    .chat-container::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+    }
+
+    .message {
+      max-width: 70%;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .message.own {
+      align-self: flex-end;
+    }
+
+    .message.other {
+      align-self: flex-start;
+    }
+
+    .message-bubble {
+      padding: 12px 18px;
+      border-radius: 20px;
+      word-wrap: break-word;
+      position: relative;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .message.own .message-bubble {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-bottom-right-radius: 6px;
+    }
+
+    .message.other .message-bubble {
+      background: rgba(255, 255, 255, 0.95);
+      color: #2d3748;
+      border-bottom-left-radius: 6px;
+    }
+
+    .message-header {
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      opacity: 0.8;
+    }
+
+    .message-content {
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+
+    .message-time {
+      font-size: 0.7rem;
+      opacity: 0.6;
+      margin-top: 4px;
+      text-align: right;
+    }
+
+    .input-container {
+      padding: 20px 30px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .input-form {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .message-input {
+      flex: 1;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 25px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #2d3748;
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .message-input:focus {
+      background: white;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .message-input::placeholder {
+      color: #a0aec0;
+    }
+
+    .send-button {
+      width: 50px;
+      height: 50px;
+      border: none;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+    }
+
+    .send-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+    }
+
+    .send-button:active {
+      transform: translateY(0);
+    }
+
+    .send-button svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .welcome-message {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 1.1rem;
+      margin: 50px 0;
+      animation: fadeIn 1s ease-out;
+    }
+
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .modal h2 {
+      color: #2d3748;
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+    }
+
+    .modal input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.3s ease;
+    }
+
+    .modal input:focus {
+      border-color: #667eea;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .modal-button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .modal-button.primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .modal-button.primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        height: 100vh;
+        border-radius: 0;
+      }
+      
+      .header, .input-container {
+        padding: 15px 20px;
+      }
+      
+      .chat-container {
+        padding: 15px 20px;
+      }
+      
+      .message {
+        max-width: 85%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>ChatFlow</h1>
+      <div class="status">
+        <div class="status-dot"></div>
+        <span id="statusText">Connected</span>
+      </div>
+    </div>
+
+    <div class="chat-container" id="chat">
+      <div class="welcome-message">
+        🚀 Welcome to ChatFlow! Start chatting with your team.
+      </div>
+    </div>
+
+    <div class="input-container">
+      <div class="input-form">
+        <input 
+          type="text" 
+          id="messageInput" 
+          class="message-input" 
+          placeholder="Type your message..." 
+          maxlength="500"
+        />
+        <button class="send-button" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="connectionModal">
+    <div class="modal-content">
+      <h2>Join Chat Room</h2>
+      <input type="text" id="roomIdInput" placeholder="Enter Room ID" />
+      <input type="password" id="tokenInput" placeholder="Enter JWT Token" />
+      <div class="modal-buttons">
+        <button class="modal-button primary" onclick="connect()">Connect</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let ws = null;
+    let roomId = null;
+    let token = null;
+    let currentUsername = null;
+
+    function updateStatus(text, connected = true) {
+      const statusText = document.getElementById('statusText');
+      const statusDot = document.querySelector('.status-dot');
+      statusText.textContent = text;
+      statusDot.style.background = connected ? '#4ade80' : '#ef4444';
+    }
+
+    function addMessage(username, content, timestamp, isOwn = false) {
+      const chat = document.getElementById('chat');
+      const welcomeMsg = chat.querySelector('.welcome-message');
+      if (welcomeMsg) welcomeMsg.remove();
+
+      const messageEl = document.createElement('div');
+      messageEl.className = `message ${isOwn ? 'own' : 'other'}`;
+      
+      const time = timestamp ? new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      
+      messageEl.innerHTML = `
+        <div class="message-bubble">
+          ${!isOwn ? `<div class="message-header">${username}</div>` : ''}
+          <div class="message-content">${content}</div>
+          <div class="message-time">${time}</div>
+        </div>
+      `;
+
+      chat.appendChild(messageEl);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function connect() {
+      roomId = document.getElementById('roomIdInput').value.trim();
+      token = document.getElementById('tokenInput').value.trim();
+      
+      if (!roomId || !token) {
+        alert('Please enter both Room ID and Token');
+        return;
+      }
+
+      // Try to extract username from token (basic JWT parsing)
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        currentUsername = payload.username || payload.sub || 'You';
+      } catch {
+        currentUsername = 'You';
+      }
+
+      document.getElementById('connectionModal').style.display = 'none';
+      connectWebSocket();
+    }
+
+    function connectWebSocket() {
+      const wsUrl = `ws://localhost:8000/ws/${roomId}?token=${encodeURIComponent(token)}`;
+      
+      try {
+        ws = new WebSocket(wsUrl);
+        updateStatus('Connecting...', false);
+
+        ws.onopen = () => {
+          updateStatus('Connected');
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.error) {
+              addMessage('System', `Error: ${data.error}`, null, false);
+            } else {
+              const isOwn = data.username === currentUsername;
+              addMessage(data.username, data.content, data.timestamp, isOwn);
+            }
+          } catch (e) {
+            console.error('Failed to parse message:', e);
+          }
+        };
+
+        ws.onclose = (event) => {
+          updateStatus('Disconnected', false);
+          if (event.code === 1008) {
+            addMessage('System', 'Authentication failed. Please reconnect with valid credentials.', null, false);
+          } else if (event.code !== 1000) {
+            setTimeout(() => {
+              if (ws.readyState === WebSocket.CLOSED) {
+                connectWebSocket();
+              }
+            }, 3000);
+          }
+        };
+
+        ws.onerror = () => {
+          updateStatus('Connection Error', false);
+        };
+
+      } catch (e) {
+        updateStatus('Connection Failed', false);
+      }
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const content = input.value.trim();
+      
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        addMessage('System', 'Not connected. Please wait for connection to be established.', null, false);
+        return;
+      }
+      
+      if (content !== "") {
+        try {
+          ws.send(JSON.stringify({ content }));
+          input.value = "";
+        } catch (e) {
+          addMessage('System', 'Failed to send message. Please try again.', null, false);
+        }
+      }
+    }
+
+    // Event listeners
+    document.getElementById('messageInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+
+    document.getElementById('roomIdInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        document.getElementById('tokenInput').focus();
+      }
+    });
+
+    document.getElementById('tokenInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        connect();
+      }
+    });
+
+    // Auto-focus on room ID input
+    document.getElementById('roomIdInput').focus();
+  </script>
+</body>
+</html>
