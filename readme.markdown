@@ -12,6 +12,14 @@ A modern, real-time chat application built with FastAPI backend and vanilla Java
 - **Responsive design** that works on all devices
 - **PostgreSQL database** for persistent data storage
 - **Interactive API documentation** with FastAPI's automatic docs
+- **Admin Dashboard**: Web-based interface to manage Users, Rooms, and Messages via SQLAdmin
+-**Analytics Endpoints**:
+
+    Messages per Room count
+    User activity tracking (messages sent, rooms joined)
+    Optional date filters for analytics
+    CSV Export: Download analytics data as CSV files
+    Role-Based Access Control (RBAC) to secure admin and analytics routes
 
 ## 🏗️ Architecture
 
@@ -21,6 +29,8 @@ The backend is built using FastAPI, providing:
 - WebSocket endpoints for real-time chat functionality
 - JWT-based authentication system
 - PostgreSQL database integration
+- Admin dashboard via SQLAdmin for easy data management at `localhost:8000/admin`
+- Analytics endpoints with date filtering and CSV export
 - Automatic API documentation at `localhost:8000/docs`
 
 ### Frontend (Vanilla JavaScript)
@@ -85,6 +95,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 The application will be available at:
 - **API Server**: `localhost:8000`
 - **API Documentation**: `localhost:8000/docs`
+- **Admin Dashboard**: `http://localhost:8000/admin`
 - **Frontend**: Serve the HTML file using any web server
 
 ## 🔧 API Usage
@@ -112,7 +123,11 @@ const websocket = new WebSocket(wsUrl);
 3. Enter your **JWT Token** (obtained from login API)
 4. Start chatting in real-time!
 
-## 🗂️ Project Structure
+
+### 4. Admin Dashboard
+Visit `http://localhost:8000/admin` to manage Users, Rooms, and Messages through a web interface (requires proper admin role).
+
+
 
 
 
@@ -124,6 +139,9 @@ const websocket = new WebSocket(wsUrl);
 | POST | `/auth/login` | User login (returns JWT token) |
 | POST | `/rooms/create` | Create a new chat room |
 | WebSocket | `/ws/{room_id}?token={jwt}` | Real-time chat connection |
+| POST |  |`/analytics/messages-per-room`| Get message counts per room
+| POST |  |`/analytics/user-activity`|     Track user message activity with optional date filters
+| POST |  |`/analytics/export-messages-csv`|  Export message analytics data as CSV
 
 ## 🌟 Frontend Features
 
