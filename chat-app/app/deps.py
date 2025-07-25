@@ -30,3 +30,9 @@ def require_role(required_role: str):
             raise HTTPException(status_code=403, detail="Insufficient privileges")
         return user
     return role_dependency
+
+
+def require_admin(user=Depends(get_current_user)):
+    if user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admins only")
+    return user
